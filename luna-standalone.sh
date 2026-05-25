@@ -3,7 +3,7 @@
 # ║          Luna: Absolute Cinema - Proxmox LXC Installer      ║
 # ║                    Standalone verze                          ║
 # ║  Spusť v Proxmox shellu:                                     ║
-# ║    bash -c "$(curl -fsSL <URL_TOHOTO_SCRIPTU>)"             ║
+# ║    bash -c "$(curl -fsSL https://raw.githubusercontent.com/Venom666M/luna-lxc/main/luna-standalone.sh)"  ║
 # ╚══════════════════════════════════════════════════════════════╝
 # Autor: Radeg / community
 # Licence: MIT
@@ -306,7 +306,7 @@ mkdir -p \"\${LUNA_DIR}\"
 # Pokus 1: přímý download
 DOWNLOAD_OK=false
 if curl -fsSL --retry 3 --retry-delay 3 \
-   'https://webshare.cz/api/file/q1oSHbCPl2/luna-linux-amd64-1-4-3' \
+   'https://github.com/Venom666M/luna-lxc/releases/download/v1.4.3/luna-linux-amd64' \
    -o \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null; then
   # Ověření, zda je soubor spustitelný binárka (ne HTML chybová stránka)
   if file \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null | grep -qi 'ELF\|executable'; then
@@ -318,7 +318,7 @@ fi
 # Pokus 2: wget
 if [ \"\$DOWNLOAD_OK\" = false ]; then
   if wget -q --tries=3 \
-     'https://webshare.cz/api/file/q1oSHbCPl2/luna-linux-amd64-1-4-3' \
+     'https://github.com/Venom666M/luna-lxc/releases/download/v1.4.3/luna-linux-amd64' \
      -O \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null; then
     if file \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null | grep -qi 'ELF\|executable'; then
       DOWNLOAD_OK=true
@@ -333,7 +333,7 @@ if [ \"\$DOWNLOAD_OK\" = false ]; then
   echo -e \"  Webshare vyžaduje přihlášení nebo změnil API.\"
   echo -e \"  \"
   echo -e \"  MANUÁLNÍ POSTUP:\"
-  echo -e \"  1. Stáhni soubor: https://webshare.cz/#/file/q1oSHbCPl2/luna-linux-amd64-1-4-3\"
+  echo -e \"  1. Stáhni soubor: https://github.com/Venom666M/luna-lxc/releases/tag/v1.4.3\"
   echo -e \"  2. Zkopíruj ho do containeru:\"
   echo -e \"     pct push ${CT_ID} luna-linux-amd64 \${LUNA_DIR}/\${LUNA_BINARY}\"
   echo -e \"  3. Spusť: pct exec ${CT_ID} -- chmod +x \${LUNA_DIR}/\${LUNA_BINARY}\"
