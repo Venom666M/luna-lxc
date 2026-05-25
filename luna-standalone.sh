@@ -301,15 +301,14 @@ msg_ok 'Systém připraven'
 
 # Stažení Luna
 msg_info 'Stahuji Luna ${LUNA_VERSION}...'
-mkdir -p \"\${LUNA_DIR}\"
+mkdir -p \"${LUNA_DIR}\"
 
 # Pokus 1: přímý download
 DOWNLOAD_OK=false
 if curl -fsSL --retry 3 --retry-delay 3 \
-   'https://github.com/Venom666M/luna-lxc/releases/download/v1.4.3/luna-linux-amd64' \
-   -o \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null; then
-  # Ověření, zda je soubor spustitelný binárka (ne HTML chybová stránka)
-  if file \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null | grep -qi 'ELF\|executable'; then
+   'https://github.com/Venom666M/luna-lxc/releases/download/v1.4.3/luna-linux-amd64-1.4.3' \
+   -o \"${LUNA_DIR}/${LUNA_BINARY}\" 2>/dev/null; then
+  if file \"${LUNA_DIR}/${LUNA_BINARY}\" 2>/dev/null | grep -qi 'ELF\|executable'; then
     DOWNLOAD_OK=true
     msg_ok 'Luna binary stažena (curl)'
   fi
@@ -318,9 +317,9 @@ fi
 # Pokus 2: wget
 if [ \"\$DOWNLOAD_OK\" = false ]; then
   if wget -q --tries=3 \
-     'https://github.com/Venom666M/luna-lxc/releases/download/v1.4.3/luna-linux-amd64' \
-     -O \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null; then
-    if file \"\${LUNA_DIR}/\${LUNA_BINARY}\" 2>/dev/null | grep -qi 'ELF\|executable'; then
+     'https://github.com/Venom666M/luna-lxc/releases/download/v1.4.3/luna-linux-amd64-1.4.3' \
+     -O \"${LUNA_DIR}/${LUNA_BINARY}\" 2>/dev/null; then
+    if file \"${LUNA_DIR}/${LUNA_BINARY}\" 2>/dev/null | grep -qi 'ELF\|executable'; then
       DOWNLOAD_OK=true
       msg_ok 'Luna binary stažena (wget)'
     fi
@@ -330,25 +329,23 @@ fi
 if [ \"\$DOWNLOAD_OK\" = false ]; then
   echo -e \"\"
   echo -e \"  \${YW}⚠ Automatické stažení selhalo!\"
-  echo -e \"  Webshare vyžaduje přihlášení nebo změnil API.\"
   echo -e \"  \"
   echo -e \"  MANUÁLNÍ POSTUP:\"
-  echo -e \"  1. Stáhni soubor: https://github.com/Venom666M/luna-lxc/releases/tag/v1.4.3\"
-  echo -e \"  2. Zkopíruj ho do containeru:\"
-  echo -e \"     pct push ${CT_ID} luna-linux-amd64 \${LUNA_DIR}/\${LUNA_BINARY}\"
-  echo -e \"  3. Spusť: pct exec ${CT_ID} -- chmod +x \${LUNA_DIR}/\${LUNA_BINARY}\"
-  echo -e \"  4. Spusť: pct exec ${CT_ID} -- systemctl start luna\${CL}\"
+  echo -e \"  1. Otevři GitHub Releases: https://github.com/Venom666M/luna-lxc/releases/tag/v1.4.3\"
+  echo -e \"  2. Stáhni asset: luna-linux-amd64-1.4.3\"
+  echo -e \"  3. Zkopíruj ho do containeru:\"
+  echo -e \"     pct push ${CT_ID} luna-linux-amd64-1.4.3 ${LUNA_DIR}/${LUNA_BINARY}\"
+  echo -e \"  4. Spusť: pct exec ${CT_ID} -- chmod +x ${LUNA_DIR}/${LUNA_BINARY}\"
+  echo -e \"  5. Spusť: pct exec ${CT_ID} -- systemctl start luna\"
   echo -e \"  \"
-  # Vytvoří placeholder pro pokračování nastavení
-  echo '#!/bin/bash' > \"\${LUNA_DIR}/\${LUNA_BINARY}\"
-  echo 'echo Luna binary nenalezena - viz MOTD' >> \"\${LUNA_DIR}/\${LUNA_BINARY}\"
+  echo -e \"  \${CL}\"
+  echo '#!/bin/bash' > \"${LUNA_DIR}/${LUNA_BINARY}\"
+  echo 'echo Luna binary nenalezena - viz MOTD' >> \"${LUNA_DIR}/${LUNA_BINARY}\"
 fi
 
-# Oprávnění
-chmod +x \"\${LUNA_DIR}/\${LUNA_BINARY}\"
+chmod +x \"${LUNA_DIR}/${LUNA_BINARY}\"
 msg_ok 'Oprávnění nastavena'
 
-# systemd service
 msg_info 'Vytvářím systemd service...'
 cat > /etc/systemd/system/luna.service << 'SVCEOF'
 [Unit]
@@ -376,11 +373,10 @@ ReadWritePaths=LUNA_DIR_PLACEHOLDER
 WantedBy=multi-user.target
 SVCEOF
 
-# Nahrazení placeholderů
-sed -i 's|LUNA_DIR_PLACEHOLDER|'\"${LUNA_DIR}\"'|g' /etc/systemd/system/luna.service
-sed -i 's|LUNA_BINARY_PLACEHOLDER|'\"${LUNA_BINARY}\"'|g' /etc/systemd/system/luna.service
-sed -i 's|LUNA_PORT_PLACEHOLDER|'\"${LUNA_PORT}\"'|g' /etc/systemd/system/luna.service
-sed -i 's|LUNA_HTTPS_PORT_PLACEHOLDER|'\"${LUNA_HTTPS_PORT}\"'|g' /etc/systemd/system/luna.service
+sed -i 's|LUNA_DIR_PLACEHOLDER|${LUNA_DIR}|g' /etc/systemd/system/luna.service
+sed -i 's|LUNA_BINARY_PLACEHOLDER|${LUNA_BINARY}|g' /etc/systemd/system/luna.service
+sed -i 's|LUNA_PORT_PLACEHOLDER|${LUNA_PORT}|g' /etc/systemd/system/luna.service
+sed -i 's|LUNA_HTTPS_PORT_PLACEHOLDER|${LUNA_HTTPS_PORT}|g' /etc/systemd/system/luna.service
 
 systemctl daemon-reload
 systemctl enable luna.service &>/dev/null
@@ -393,7 +389,6 @@ else
   msg_ok 'Luna service nakonfigurována (čeká na binary)'
 fi
 
-# MOTD
 IP=\$(hostname -I | awk '{print \$1}' 2>/dev/null || echo 'NEZNAMA')
 IP_DASHES=\$(echo \"\$IP\" | tr '.' '-')
 
@@ -463,7 +458,6 @@ main() {
   show_menu
   show_summary
   
-  # Potvrzení
   if command -v whiptail &>/dev/null; then
     if ! whiptail --backtitle "Luna LXC Installer" \
       --yesno "Vytvořit Luna LXC container s výše uvedeným nastavením?" \
